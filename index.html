@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Jobs</title>
+<style>
+@font-face{font-family:'Digi';src:url('./digi.otf') format('opentype');}
+*{
+  user-select:none;
+  -webkit-user-select:none;
+  -ms-user-select:none;
+}
+html,body{
+  margin:0;
+  padding:0;
+  width:100%;
+  height:100%;
+  font-family:'Digi';
+  overflow:hidden;
+}
+img{
+  -webkit-user-drag:none;
+  user-drag:none;
+  user-select:none;
+  touch-action:none;
+  pointer-events:none;
+}
+body{
+  background:linear-gradient(#eaf1f6,#e9dcc6);
+  display:flex;
+}
+#left{
+  width:16.66%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:space-between;
+  padding-top:12px;
+}
+#portrait{
+  height:50%;
+}
+#btn{
+  width:128px;
+  height:128px;
+  margin:12px auto;
+  padding:0;
+  font-size:24px;
+  border:none;
+  border-radius:12px;
+  color:black;
+  font-family:'Digi';
+}
+#btn.giveup{background:#aaa;}
+#btn.newgame{background:#4caf50;}
+#right{
+  width:83.33%;
+  height:100%;
+  padding:16px;
+}
+#bubble{
+  position:relative;
+  width:100%;
+  height:auto;
+  background:white;
+  border-radius:12px;
+  padding:16px;
+  box-sizing:border-box;
+}
+#bubble:before{
+  content:"";
+  position:absolute;
+  left:-40px;
+  bottom:150px;
+  width:0;height:0;
+  border-top:40px solid transparent;
+  border-bottom:0px solid transparent;
+  border-right:40px solid white;
+}
+#title{
+  font-size:28px;
+  margin-bottom:0px;
+  text-align: center;
+}
+#grid{
+  display:grid;
+grid-template-columns:repeat(5,1fr);
+grid-template-rows:repeat(4,1fr);
+
+  gap:8px;
+  height:calc(100% - 50px);
+}
+.tile{
+  border-radius:8px;
+  background:#f0f0f0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+.tile img{
+  max-width:80%;
+  max-height:60%;
+}
+.tile span{
+  margin-top:4px;
+  text-align:center;
+}
+</style>
+</head>
+<body>
+
+<div id="left">
+  <button id="btn"></button>
+  <img id="portrait">
+</div>
+
+<div id="right">
+  <div id="bubble">
+    <div id="title">I want to be a</div>
+    <div id="grid"></div>
+  </div>
+</div>
+
+<script>
+const memories=[
+  "actor","architect","artist","astronaut","baker","ballerina","baseball player",
+  "carpenter","cartoonist","dentist","doctor","engineer","farmer","fashion designer",
+  "figure skater","firefighter","florist","game creator","lawyer","musician","newscaster",
+  "pastry chef","pet store clerk","pharmacist","pilot","police officer","singer","soccer player",
+  "teacher","vet","writer","zookeeper"
+];
+
+let answerIndex, tiles=[], gameOver=false;
+
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+}
+
+const audioCache = {};
+
+[...memories,"victory","incorrect","question"].forEach(n=>{
+  audioCache[n] = new Audio("./audio/"+n+".wav");
+});
+
+function playAudio(name){
+  if(!audioCache[name]){
+    audioCache[name] = new Audio("./audio/"+name+".wav");
+    audioCache[name].preload = "auto";
+  }
+  audioCache[name].currentTime = 0;
+  audioCache[name].play();
+}
+
+function stopAllAudio(){
+  Object.values(audioCache).forEach(a=>{
+    a.pause();
+    a.currentTime = 0;
+  });
+}
+
+function newGame(){
+  gameOver=false;
+  characterIndex = undefined; 
+tiles = [...memories];
+shuffle(tiles);
+tiles = tiles.slice(0, 20); // take first 20 after shuffle
+answerIndex = Math.floor(Math.random() * tiles.length);
+  document.getElementById("btn").textContent="Give Up";
+  document.getElementById("btn").className="giveup";
+  setPortrait("think");
+  stopAllAudio();
+  playAudio("question");
+  render();
+}
+
+let characterIndex;   // global, per game
+
+function setPortrait(state){
+  if(characterIndex===undefined){
+    characterIndex = String(
+      Math.floor(Math.random()*10)+1
+    ).padStart(2,"0");
+  }
+  document.getElementById("portrait").src =
+    `./images/character ${state} ${characterIndex}.png`;
+}
+
+function colorByDistance(i){
+  const ax=answerIndex%5, ay=Math.floor(answerIndex/5);
+  const bx=i%5, by=Math.floor(i/5);
+  const d=Math.hypot(ax-bx,ay-by);
+  const t=Math.min(d/5,1);
+  const r=Math.floor(255*(1-t));
+  const b=Math.floor(255*t);
+  return `rgb(${r},0,${b})`;
+}
+
+function render(){
+  const grid=document.getElementById("grid");
+  grid.innerHTML="";
+  tiles.forEach((m,i)=>{
+    const d=document.createElement("div");
+    d.className="tile";
+    d.onclick=()=>{
+      playAudio(m);
+      if(gameOver)return;
+      if(i===answerIndex){
+        d.style.background="red";
+        gameOver=true;
+		stopAllAudio();
+        playAudio("victory");
+        playAudio("yes "+m);
+        setPortrait("victory");
+		document.getElementById("btn").textContent="New Game";
+		document.getElementById("btn").className="newgame";
+      }else{
+        d.style.background=colorByDistance(i);
+        playAudio("incorrect");
+      }
+    };
+    const img=document.createElement("img");
+    img.src="./images/"+m+".png";
+    const sp=document.createElement("span");
+    sp.textContent=m;
+    d.append(img,sp);
+    grid.appendChild(d);
+  });
+}
+
+document.getElementById("btn").onclick=()=>{
+  if(gameOver)newGame();
+  else{
+    gameOver=true;
+	characterIndex = undefined;
+    const tilesDiv=document.querySelectorAll(".tile");
+    tilesDiv[answerIndex].style.background="red";
+    playAudio("yes "+tiles[answerIndex]);
+    document.getElementById("btn").textContent="New Game";
+	document.getElementById("btn").className="newgame";
+  }
+};
+
+playAudio("question");
+newGame();
+</script>
+</body>
+</html>
