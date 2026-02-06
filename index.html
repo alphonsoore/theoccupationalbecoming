@@ -145,12 +145,12 @@ function shuffle(a){
 const audioCache = {};
 
 [...memories,"victory","incorrect","question"].forEach(n=>{
-  audioCache[n] = new Audio("./audio/"+n+".wav");
+  audioCache[n] = new Audio("https://raw.githubusercontent.com/alphonsoore/theoccupationalbecoming/main/audio/"+n+".wav");
 });
 
 function playAudio(name){
   if(!audioCache[name]){
-    audioCache[name] = new Audio("./audio/"+name+".wav");
+    audioCache[name] = new Audio("https://raw.githubusercontent.com/alphonsoore/theoccupationalbecoming/main/audio/"+name+".wav");
     audioCache[name].preload = "auto";
   }
   audioCache[name].currentTime = 0;
@@ -188,7 +188,7 @@ function setPortrait(state){
     ).padStart(2,"0");
   }
   document.getElementById("portrait").src =
-    `./images/character ${state} ${characterIndex}.png`;
+    `https://raw.githubusercontent.com/alphonsoore/theoccupationalbecoming/main/images/character ${state} ${characterIndex}.png`;
 }
 
 function colorByDistance(i){
@@ -225,7 +225,7 @@ function render(){
       }
     };
     const img=document.createElement("img");
-    img.src="./images/"+m+".png";
+    img.src="https://raw.githubusercontent.com/alphonsoore/theoccupationalbecoming/main/images/"+m+".png";
     const sp=document.createElement("span");
     sp.textContent=m;
     d.append(img,sp);
